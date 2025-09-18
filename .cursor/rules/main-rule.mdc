@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+1. Always adhere to the README.md to understand how the project SHOULD function and work.
+2. Always use current types if specifying types (lowercase built-in, not imported)
+3. Always read TASKS.md to ensure you know what your current task is. Ensure you are marking things according to the key.
+
+4. Do not use placeholder logic, use TODO comments as needed, but try to implement full functionality.

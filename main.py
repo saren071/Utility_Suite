@@ -6,45 +6,33 @@ Responsibilities:
 - Ensure environment readiness:
     - Create config/ and logs/ directories if missing (use utils.config_manager).
     - Initialize centralized logger (utils.logger).
-    - Load persisted user settings and manifest (utils.config_manager).
-- Load lightweight package metadata via utils.module_loader.discover_packages() to build CLI menus quickly.
-- Present CLI to user:
+- Fast package discovery via utils.module_loader.discover_packages().
+- Present CLI:
     - Show packages and their features.
-    - Accept selection of package -> feature.
-    - When a feature is selected, call utils.module_loader.load_package(package_id) and then package.run(feature_id, args, ctx).
-- Provide runtime context `ctx` injected into packages/features:
-    ctx = {
-        "logger": logger,
-        "format": formatting,
-        "config_manager": config_manager,
-        "service_manager": service_manager,
-        "constants": constants
-    }
-- Coordinate starting/stopping the background agent on user request.
-- Graceful shutdown: request running tasks to stop, flush logs, save state.
-
-Design constraints:
-- Keep imports lightweight at module import time (lazy import heavy libs inside functions).
-- main.py must not implement package-specific logic.
-
-Dependencies:
-- Internal: utils.module_loader, utils.logger, utils.formatting, utils.config_manager, utils.service_manager
-- External: sys, signal, threading
-
-Testing:
-- Factor CLI loop into testable functions to allow pytest-driven simulation of user choices.
+    - Accept selection; load package and run selected feature with args.
+- Provide runtime context `ctx` to features:
+    ctx = {"logger", "format", "config_manager", "service_manager", "constants"}
+- Graceful shutdown.
 """
 
+from __future__ import annotations
+
+import json
+import sys
 import traceback
+from typing import Any
+
 from utils.formatting import Formatting
 from utils.service_manager import ServiceManager
 from utils.constants import Constants
 from utils.module_loader import ModuleLoader
 from utils.config_manager import ConfigManager
 from utils.logger import get_logger, shutdown_logger
-import sys
+
 from rich.console import Console
 from rich.panel import Panel
+from rich.table import Table
+
 
 class Main:
     def __init__(self):
@@ -54,103 +42,165 @@ class Main:
         self.service_manager = ServiceManager()
         self.constants = Constants()
         self.module_loader = ModuleLoader()
+        self.console = Console()
         self.is_initialized = False
-        self.menu_choices = [
-            "1. Show Packages",
-            "2. Show Options",
-            "3. Show Project Info",
-            "4. Exit"
-        ]
-        self.menu_choices_mapped = {
-            "1": self._show_packages,
-            "2": self._show_options,
-            "3": self._show_project_info,
-            "4": self._shutdown
-        }
 
     def initialize(self):
         self.logger.info("Initializing...")
-        # TODO: Implement initialize
-        # this is currently a placeholder
-        self._setup_environment()
+        self.config_manager.setup()
         self.is_initialized = True
         self.logger.info("Initialize complete")
 
     def run(self):
-        while self.is_initialized:
-            try:
-                initial_load_choice = input("Would you like to use the CLI? (y/n): ")
-                if initial_load_choice.lower() == "y":
-                    self._run_cli()
-                elif initial_load_choice.lower() == "n":
-                    self._run_ui()
-                else:
-                    print("Invalid choice")
-                    self.logger.error("Invalid choice")
-                    continue
-            except Exception as e:
-                self.logger.error(f"Error running CLI: {e}")
-                self.logger.error(traceback.format_exc())
-                self.logger.error("Shutting down...")
-                self._shutdown()
+        if not self.is_initialized:
+            self.initialize()
+        try:
+            self._run_cli()
+        except KeyboardInterrupt:
+            self.console.print("\n[red]Interrupted[/red]")
+        except Exception as e:
+            self.logger.error(f"Error running CLI: {e}")
+            self.logger.error(traceback.format_exc())
+        finally:
+            self._shutdown()
+
+    def _ctx(self) -> dict:
+        return {
+            "logger": self.logger,
+            "format": self.formatting,
+            "config_manager": self.config_manager,
+            "service_manager": self.service_manager,
+            "constants": self.constants,
+        }
 
     def _run_cli(self):
-        self.logger.info("Running CLI...")
-        console = Console()
         while True:
-            console.print(Panel(f"[bold purple]Welcome to the Utility Suite![/bold purple]\n[bold red]Please select an option:[/bold red]"))
-            for choice in self.menu_choices:
-                console.print(f"[cyan]{choice}[/cyan]")
-
-            choice = console.input("\n[bold yellow]Enter your choice:[/bold yellow] ")
-            if choice in self.menu_choices_mapped:
-                self.menu_choices_mapped[choice]()
+            self.console.print(Panel("[bold purple]Utility Suite[/bold purple]\nSelect an option:"))
+            self.console.print("[cyan]1.[/cyan] List & Run Packages")
+            self.console.print("[cyan]2.[/cyan] Project Info")
+            self.console.print("[cyan]3.[/cyan] Exit")
+            choice = self.console.input("\n[bold yellow]Enter choice:[/bold yellow] ").strip()
+            if choice == "1":
+                self._menu_packages()
+            elif choice == "2":
+                self._show_project_info()
+            elif choice == "3":
+                break
             else:
-                console.print("[red]Invalid choice[/red]\n")
+                self.console.print("[red]Invalid choice[/red]\n")
 
-    def _run_ui(self):
-        self.logger.info("Running UI...")
-        # TODO: Implement run ui
-        # this is currently a placeholder
-        self.logger.info("UI run complete")
-        self.logger.info("UI is not implemented yet")
-        self.logger.info("Shutting down...")
-        self._shutdown()
+    def _menu_packages(self):
+        packages = self.module_loader.discover_packages()
+        if not packages:
+            self.console.print("[red]No packages found.[/red]")
+            return
 
-    def _show_packages(self):
-        self.logger.info("Showing packages...")
-        self.module_loader.run()
+        # List packages
+        table = Table(title="Packages")
+        table.add_column("#", justify="right")
+        table.add_column("ID")
+        table.add_column("Name")
+        table.add_column("Version")
+        table.add_column("Features")
+        for idx, pkg in enumerate(packages, start=1):
+            features = ", ".join([f.get("id", "?") for f in pkg.get("features", [])])
+            table.add_row(str(idx), pkg.get("id", ""), pkg.get("name", ""), pkg.get("version", ""), features)
+        self.console.print(table)
 
-    def _show_options(self):
-        # TODO: Implement show options
-        # this is currently a placeholder
-        self.logger.info("Showing options...")
-        print("Show Options")
+        sel = self.console.input("Select package # (or blank to return): ").strip()
+        if not sel:
+            return
+        try:
+            pidx = int(sel) - 1
+            if pidx < 0 or pidx >= len(packages):
+                raise ValueError
+        except Exception:
+            self.console.print("[red]Invalid selection[/red]")
+            return
+
+        pkg_meta = packages[pidx]
+        pkg_id_val = pkg_meta.get("id")
+        if not isinstance(pkg_id_val, str) or not pkg_id_val:
+            self.console.print("[red]Invalid package id[/red]")
+            return
+        pkg_id: str = pkg_id_val
+        module = self.module_loader.load_package(pkg_id)
+        if module is None:
+            self.console.print(f"[red]Failed to load package {pkg_id}[/red]")
+            return
+
+        feats = module.meta.get("features", [])
+        if not feats:
+            self.console.print("[yellow]No features found for this package[/yellow]")
+            return
+
+        # Feature selection
+        table = Table(title=f"Features — {pkg_meta.get('name', pkg_id)}")
+        table.add_column("#", justify="right")
+        table.add_column("Feature ID")
+        table.add_column("Name")
+        for idx, f in enumerate(feats, start=1):
+            table.add_row(str(idx), f.get("id", ""), f.get("name", ""))
+        self.console.print(table)
+
+        sel = self.console.input("Select feature # (or blank to return): ").strip()
+        if not sel:
+            return
+        try:
+            fidx = int(sel) - 1
+            if fidx < 0 or fidx >= len(feats):
+                raise ValueError
+        except Exception:
+            self.console.print("[red]Invalid selection[/red]")
+            return
+
+        feature_id_val = feats[fidx].get("id")
+        if not isinstance(feature_id_val, str) or not feature_id_val:
+            self.console.print("[red]Invalid feature id[/red]")
+            return
+        feature_id: str = feature_id_val
+
+        # Args input
+        self.console.print("Enter args as JSON (e.g., {\"path\": \"C:\\temp\"}) or blank for {}:")
+        args_s = self.console.input("> ").strip()
+        args: dict[str, Any] = {}
+        if args_s:
+            try:
+                args = json.loads(args_s)
+                if not isinstance(args, dict):
+                    raise ValueError
+            except Exception:
+                self.console.print("[red]Invalid JSON args. Using {}[/red]")
+                args = {}
+
+        # Execute
+        self.console.print(Panel(f"Running {pkg_id}.{feature_id} ...", style="green"))
+        result = module.run(feature_id, args=args, ctx=self._ctx())
+        self._render_result(result)
+
+    def _render_result(self, result: dict):
+        success = result.get("success")
+        message = result.get("message")
+        data = result.get("data")
+        status = "SUCCESS" if success else "FAIL"
+        self.console.print(Panel(f"Status: {status}\nMessage: {message}", title="Result"))
+        try:
+            pretty = json.dumps(data, indent=2, ensure_ascii=False)
+            self.console.print(pretty)
+        except Exception:
+            self.console.print(str(data))
 
     def _show_project_info(self):
-        # TODO: Implement show project info
-        # this is currently a placeholder
-        self.logger.info("Showing project info...")
-        print("Show Project Info")
-
-    def _setup_environment(self):
-        self.logger.info("Setting up environment...")
-        self.config_manager.setup()
-        # self.service_manager.setup() # TODO: Add service manager setup
-        # self.constants.setup() # TODO: Add constants setup
-        # self.module_loader.setup() # TODO: Add module loader setup
-        self.logger.info("Environment setup complete")
+        self.console.print(Panel("Utility Suite — Modular utilities for Windows. (v0.1.0)", title="About"))
 
     def _shutdown(self):
         self.logger.info("Shutting down...")
-        # TODO: Implement shutdown
-        # this is currently a placeholder
-        self.logger.info("Shutdown complete")
         shutdown_logger()
         self.is_initialized = False
-        sys.exit(0)
+        # Do not sys.exit here to allow embedding
+
 
 if __name__ == "__main__":
-    main = Main()
-    main.initialize()
-    main.run()
+    app = Main()
+    app.initialize()
+    app.run()

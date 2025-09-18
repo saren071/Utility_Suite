@@ -11,3 +11,5 @@ pytest
 tabulate
 setuptools
 py-cpuinfo
+fastapi
+pydantic

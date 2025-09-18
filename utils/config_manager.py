@@ -44,24 +44,54 @@ class ConfigManager:
         os.makedirs(self.base_path, exist_ok=True)
 
         # Ensure default config files exist (empty if needed)
-        for file in ["agent_config.json", "modules.json"]:
-            path = os.path.join(self.base_path, file)
-            if not os.path.exists(path):
+        defaults: dict[str, str] = {
+            "agent_config.json": "{}\n",
+            "modules.json": "{}\n",
+            "file_organizer.json": (
+                "{\n"
+                "  \"jpg\": \"Images\",\n"
+                "  \"jpeg\": \"Images\",\n"
+                "  \"png\": \"Images\",\n"
+                "  \"gif\": \"Images\",\n"
+                "  \"pdf\": \"Documents\",\n"
+                "  \"docx\": \"Documents\",\n"
+                "  \"xlsx\": \"Documents\",\n"
+                "  \"zip\": \"Archives\",\n"
+                "  \"7z\": \"Archives\",\n"
+                "  \"rar\": \"Archives\",\n"
+                "  \"mp3\": \"Audio\",\n"
+                "  \"wav\": \"Audio\",\n"
+                "  \"mp4\": \"Video\",\n"
+                "  \"mkv\": \"Video\"\n"
+                "}\n"
+            ),
+        }
+        for file_name, content in defaults.items():
+            path = os.path.join(self.base_path, file_name)
+            if not os.path.exists(path) or os.path.getsize(path) == 0:
                 with open(path, "w", encoding="utf-8") as f:
-                    f.write("{}")  # empty JSON object
+                    f.write(content)
 
 
     def load_json(self, path, default=None):
         """
         Load JSON from a file, optionally providing a default value.
+        Returns default if file missing or invalid JSON.
         """
         full_path = os.path.join(self.base_path, path)
         if not os.path.exists(full_path):
             if default is None:
                 raise FileNotFoundError(f"Config file not found: {path}")
             return default
-        with open(full_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with open(full_path, "r", encoding="utf-8") as f:
+                content = f.read().strip()
+                if content == "":
+                    return default if default is not None else {}
+                return json.loads(content)
+        except Exception as exc:
+            self.logger.error(f"Failed to read JSON from {full_path}: {exc}")
+            return default if default is not None else {}
 
     def save_json(self, path, data):
         """

@@ -18,12 +18,29 @@ Notes:
 - Return strings only; do not print directly.
 """
 
+import os
 import tabulate
+import datetime
 
 class Formatting:
     def __init__(self):
         pass
-    
+
+    def apply_rule(self, file_path: str, rule: str) -> str:
+        """
+        Apply a rule to a file path.
+        """
+        if rule == "spaces_to_underscores":
+            return file_path.replace(" ", "_")
+        elif rule == "prefix_date":
+            return datetime.datetime.now().strftime("%Y-%m-%d_") + file_path
+        elif rule == "lowercase":
+            return file_path.lower()
+        elif rule == "remove_extension":
+            return os.path.splitext(file_path)[0]
+        else:
+            return file_path
+
     def human_readable_size(self, bytes, precision=1):
         """
         Convert bytes to a human readable size.
@@ -36,19 +53,19 @@ class Formatting:
             bytes /= 1024
             i += 1
         return f"{bytes:.{precision}f}{size_names[i]}"
-    
+
     def format_table(self, rows, headers=None):
         """
         Format a table of rows and headers.
         """
         return tabulate.tabulate(rows, headers=headers, tablefmt="grid") if headers else tabulate.tabulate(rows, tablefmt="grid")
-    
+
     def format_seconds(self, seconds):
         """
         Format seconds to a human readable time.
         """
         return f"{seconds:.2f}s"
-    
+
     def truncate_middle(self, text, maxlen):
         """
         Truncate a text in the middle.

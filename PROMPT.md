@@ -1,0 +1,1 @@
+please continue developing everything, as you forgot a massive portion of files to get this running. also, please ensure youre following the README strictly.

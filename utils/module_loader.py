@@ -2,133 +2,132 @@
 Dynamic package discovery and on-demand loader.
 
 Responsibilities:
-- Quickly discover package metadata under modules/ without importing heavy code:
-    - If package contains meta.json, read it.
-    - Otherwise, inspect tool.py for a `meta` dict using importlib.util.spec_from_file_location but avoid executing side-effect code.
+- Discover package metadata under modules/ quickly.
+  Prefer reading meta from modules.<package>.tool.meta; fall back to meta.json.
 - Persist discovery results to config/modules.json for faster startup.
 - Provide APIs:
-    - discover_packages() -> list[meta_dict]
-    - load_package(package_id) -> module object loaded from modules/<package>/tool.py (full import)
-    - enable_package(package_id, enabled: bool)
-- Validate loaded package implements:
-    - meta (dict) and run(feature_id: str, args: dict = None, ctx: dict = None) -> dict
+  - discover_packages() -> list[dict]
+  - load_package(package_id) -> imported tool module
+  - enable_package(package_id, enabled: bool) -> persist flag in manifest
 
-Dependencies:
-- External: importlib, importlib.util, os, json, types
-- Internal: utils.logger, utils.config_manager, utils.constants
-
-Security:
-- Warn if a package meta declares `needs_admin` capability; do not auto-run such features without confirmation and privilege checks.
+Notes:
+- Keep imports light; but for simplicity we import tool modules which are expected to be lightweight per project rules.
 """
+
+from __future__ import annotations
 
 import json
 import os
+import time
+import importlib
+from types import ModuleType
 from utils.logger import get_logger
 from utils.config_manager import ConfigManager
 from utils.constants import Constants
+
 
 class ModuleLoader:
     def __init__(self):
         self.logger = get_logger(__name__)
         self.config_manager = ConfigManager()
-        self.constants = Constants()
-    
-    def run(self):
-        self.logger.info("Discovering packages...")
-        packages = self._discover_packages()
-        for package in packages:
-            valid, meta = self._validate_package(package)
-            if not valid:
-                continue
-            if meta is None:
-                self.logger.error(f"Package {package} does not contain a meta")
-                continue
-            if meta["name"] is None:
-                self.logger.error(f"Package {meta['name']} does not contain a name")
-                continue
-            self.logger.info(f"Loading package {meta['name']}...")
-            valid, meta = self._load_package(meta["name"])
-            if not valid:
-                continue
-            if meta is None:
-                self.logger.error(f"Package {package} does not contain a meta")
-                continue
-            if meta["name"] is None:
-                self.logger.error(f"Package {meta['name']} does not contain a name")
-                continue
-            self.logger.info(f"Package {meta['name']} loaded")
-            print(f"Package {meta['name']} loaded")
-        self.logger.info("Packages loaded")
+        self.modules_dir = Constants.MODULES_DIR
 
-    def _discover_packages(self):
-        """
-        Discover packages under Constants.MODULES_DIR
-        Returns a list of full paths.
-        """
-        modules_dir = os.path.abspath(Constants.MODULES_DIR)
-        packages = []
-        for tool in os.listdir(modules_dir):
-            package_path = os.path.join(modules_dir, tool)
-            if os.path.isdir(package_path):
-                packages.append(package_path)
+    def discover_packages(self) -> list[dict]:
+        packages: list[dict] = []
+        if not os.path.isdir(self.modules_dir):
+            self.logger.error(f"Modules directory not found: {self.modules_dir}")
+            return packages
+
+        for entry in os.listdir(self.modules_dir):
+            pkg_dir = os.path.join(self.modules_dir, entry)
+            if not os.path.isdir(pkg_dir):
+                continue
+            try:
+                meta = self._read_meta_from_tool(entry)
+                if not meta:
+                    meta = self._read_meta_json(pkg_dir)
+                if not meta:
+                    continue
+                # Normalize
+                meta.setdefault("id", entry)
+                meta.setdefault("name", entry)
+                meta.setdefault("version", "0.0")
+                meta.setdefault("description", "")
+                meta.setdefault("features", [])
+                packages.append(meta)
+            except Exception as exc:
+                self.logger.exception(f"Failed discovering package {entry}: {exc}")
+
+        manifest = {
+            "updated_at": int(time.time()),
+            "packages": packages,
+        }
+        try:
+            self.config_manager.save_manifest(manifest)
+        except Exception:
+            self.logger.exception("Failed to save modules manifest")
+
         return packages
 
-    def _load_package(self, package_id):
-        """
-        Load a package.
-        """
-        for package_path in self._discover_packages():
-            valid, meta = self._validate_package(package_path)
-            if not valid:
-                continue
-            if meta["name"] == package_id if meta else None:
-                return True, meta
-        self.logger.error(f"Package {package_id} does not contain a valid meta.json")
-        return False, None
+    def load_package(self, package_id: str) -> ModuleType | None:
+        try:
+            module = importlib.import_module(f"modules.{package_id}.tool")
+            # Validate exports
+            if not hasattr(module, "meta") or not hasattr(module, "run"):
+                self.logger.error(f"Package {package_id} missing meta or run()")
+                return None
+            return module
+        except Exception as exc:
+            self.logger.exception(f"Failed to load package {package_id}: {exc}")
+            return None
 
-    
-    def _unload_package(self, package_id):
-        """
-        Unload a package.
-        """
-        packages = self._discover_packages()
-        for package in packages:
-            valid, meta = self._validate_package(package)
-            if not valid:
-                continue
-            if package_id == meta["name"] if meta else None:
-                return True, meta
-        return False, None
-
-    def _validate_package(self, package_path):
-        """
-        Validate a package.
-        """
-        meta_path = os.path.join(package_path, "meta.json")
-        if not os.path.exists(meta_path):
-            return False, None
-        with open(meta_path, "r") as f:
-            meta = json.load(f)
-        required_fields = ["name", "description", "author", "version", "requires", "capabilities"]
-        for field in required_fields:
-            if field not in meta or meta[field] is None:
-                return False, None
-        return True, meta
-
-    def _enable_package(self, package_id, enabled):
-        """
-        Enable a package.
-        """
-        valid, meta = self._load_package(package_id)
-        if not valid:
+    def enable_package(self, package_id: str, enabled: bool) -> bool:
+        try:
+            manifest = self.config_manager.load_manifest() or {}
+            packages = manifest.get("packages", [])
+            found = False
+            for pkg in packages:
+                if pkg.get("id") == package_id:
+                    pkg["enabled"] = bool(enabled)
+                    found = True
+                    break
+            if not found:
+                packages.append({"id": package_id, "enabled": bool(enabled)})
+            manifest["packages"] = packages
+            manifest["updated_at"] = int(time.time())
+            self.config_manager.save_manifest(manifest)
+            return True
+        except Exception:
+            self.logger.exception("Failed to update manifest enable flag")
             return False
-        return True, meta if meta else None
-    
-    def _disable_package(self, package_id):
-        """
-        Disable a package.
-        """
-        valid, meta = self._unload_package(package_id)
-        if not valid:
-            return False
-        return True, meta if meta else None
+
+    def _read_meta_from_tool(self, package_folder_name: str) -> dict | None:
+        try:
+            module = importlib.import_module(f"modules.{package_folder_name}.tool")
+            meta = getattr(module, "meta", None)
+            if isinstance(meta, dict):
+                return meta.copy()
+            return None
+        except Exception:
+            return None
+
+    def _read_meta_json(self, pkg_dir: str) -> dict | None:
+        meta_path = os.path.join(pkg_dir, "meta.json")
+        if not os.path.isfile(meta_path):
+            return None
+        try:
+            with open(meta_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            # Map legacy fields to expected
+            out = {
+                "id": os.path.basename(pkg_dir),
+                "name": data.get("name") or os.path.basename(pkg_dir),
+                "description": data.get("description", ""),
+                "version": data.get("version", "0.0"),
+                # no features in legacy meta.json
+                "features": [],
+            }
+            return out
+        except Exception as exc:
+            self.logger.error(f"Invalid meta.json at {meta_path}: {exc}")
+            return None

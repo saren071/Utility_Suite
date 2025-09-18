@@ -123,3 +123,110 @@
 2025-09-18 12:53:59,729 - utility_suite.utils.module_loader - INFO - Packages loaded
 2025-09-18 12:54:04,864 - utility_suite.__main__ - INFO - Shutting down...
 2025-09-18 12:54:04,864 - utility_suite.__main__ - INFO - Shutdown complete
+2025-09-18 15:01:37,916 - utility_suite.__main__ - INFO - Initializing...
+2025-09-18 15:01:37,917 - utility_suite.utils.config_manager - INFO - Config manager setup complete in config
+2025-09-18 15:01:37,917 - utility_suite.__main__ - INFO - Initialize complete
+2025-09-18 15:01:42,883 - utility_suite.utils.module_loader - ERROR - Failed to save modules manifest
+Traceback (most recent call last):
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\module_loader.py", line 66, in discover_packages
+    self.config_manager.save_manifest(manifest)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\config_manager.py", line 114, in save_manifest
+    return self.save_json(Constants.MODULES_MANIFEST, data)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\config_manager.py", line 101, in save_json
+    with open(full_path, "w", encoding="utf-8") as f:
+         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'config\\config/modules.json'
+2025-09-18 15:01:59,030 - utility_suite.utils.module_loader - ERROR - Failed to save modules manifest
+Traceback (most recent call last):
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\module_loader.py", line 66, in discover_packages
+    self.config_manager.save_manifest(manifest)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\config_manager.py", line 114, in save_manifest
+    return self.save_json(Constants.MODULES_MANIFEST, data)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\config_manager.py", line 101, in save_json
+    with open(full_path, "w", encoding="utf-8") as f:
+         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'config\\config/modules.json'
+2025-09-18 15:02:40,953 - utility_suite.utils.module_loader - ERROR - Failed to save modules manifest
+Traceback (most recent call last):
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\module_loader.py", line 66, in discover_packages
+    self.config_manager.save_manifest(manifest)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\config_manager.py", line 114, in save_manifest
+    return self.save_json(Constants.MODULES_MANIFEST, data)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\config_manager.py", line 101, in save_json
+    with open(full_path, "w", encoding="utf-8") as f:
+         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'config\\config/modules.json'
+2025-09-18 15:03:29,382 - utility_suite.utils.module_loader - ERROR - Failed to save modules manifest
+Traceback (most recent call last):
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\module_loader.py", line 66, in discover_packages
+    self.config_manager.save_manifest(manifest)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\config_manager.py", line 114, in save_manifest
+    return self.save_json(Constants.MODULES_MANIFEST, data)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\config_manager.py", line 101, in save_json
+    with open(full_path, "w", encoding="utf-8") as f:
+         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'config\\config/modules.json'
+2025-09-18 15:06:47,486 - utility_suite.utils.module_loader - ERROR - Failed to save modules manifest
+Traceback (most recent call last):
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\module_loader.py", line 66, in discover_packages
+    self.config_manager.save_manifest(manifest)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\config_manager.py", line 114, in save_manifest
+    return self.save_json(Constants.MODULES_MANIFEST, data)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\config_manager.py", line 101, in save_json
+    with open(full_path, "w", encoding="utf-8") as f:
+         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'config\\config/modules.json'
+2025-09-18 15:06:49,364 - utility_suite.utils.module_loader - ERROR - Package system missing meta or run()
+2025-09-18 15:06:53,214 - utility_suite.utils.module_loader - ERROR - Failed to save modules manifest
+Traceback (most recent call last):
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\module_loader.py", line 66, in discover_packages
+    self.config_manager.save_manifest(manifest)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\config_manager.py", line 114, in save_manifest
+    return self.save_json(Constants.MODULES_MANIFEST, data)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\config_manager.py", line 101, in save_json
+    with open(full_path, "w", encoding="utf-8") as f:
+         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'config\\config/modules.json'
+2025-09-18 15:06:55,132 - utility_suite.utils.module_loader - ERROR - Package agent missing meta or run()
+2025-09-18 15:06:57,278 - utility_suite.utils.module_loader - ERROR - Failed to save modules manifest
+Traceback (most recent call last):
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\module_loader.py", line 66, in discover_packages
+    self.config_manager.save_manifest(manifest)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\config_manager.py", line 114, in save_manifest
+    return self.save_json(Constants.MODULES_MANIFEST, data)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\config_manager.py", line 101, in save_json
+    with open(full_path, "w", encoding="utf-8") as f:
+         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'config\\config/modules.json'
+2025-09-18 15:06:58,492 - utility_suite.utils.module_loader - ERROR - Package backup missing meta or run()
+2025-09-18 15:06:59,421 - utility_suite.utils.module_loader - ERROR - Failed to save modules manifest
+Traceback (most recent call last):
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\module_loader.py", line 66, in discover_packages
+    self.config_manager.save_manifest(manifest)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\config_manager.py", line 114, in save_manifest
+    return self.save_json(Constants.MODULES_MANIFEST, data)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sammy\Documents_old\Projects\interview\utils\config_manager.py", line 101, in save_json
+    with open(full_path, "w", encoding="utf-8") as f:
+         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'config\\config/modules.json'
+2025-09-18 15:09:02,124 - utility_suite.__main__ - INFO - Shutting down...
+2025-09-18 15:10:05,351 - utility_suite.__main__ - INFO - Initializing...
+2025-09-18 15:10:05,351 - utility_suite.utils.config_manager - INFO - Config manager setup complete in config
+2025-09-18 15:10:05,351 - utility_suite.__main__ - INFO - Initialize complete
+2025-09-18 15:10:11,372 - utility_suite.__main__ - INFO - Shutting down...
