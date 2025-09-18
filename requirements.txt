@@ -1,0 +1,13 @@
+psutil
+GPUtil
+pyperclip
+send2trash
+rich
+pywin32; platform_system == "Windows"
+Pillow   # optional for image dedupe
+imagehash # optional for image dedupe
+APScheduler # optional for agent scheduling
+pytest
+tabulate
+setuptools
+py-cpuinfo

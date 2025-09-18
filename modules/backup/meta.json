@@ -1,0 +1,8 @@
+{
+    "name": "backup",
+    "description": "Backup module",
+    "version": "1.0.0",
+    "author": "Utility Suite",
+    "requires": ["none"],
+    "capabilities": ["none"]
+}
