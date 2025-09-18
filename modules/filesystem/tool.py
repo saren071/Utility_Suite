@@ -24,7 +24,7 @@ Testing:
 - test_tool.py should test feature dispatch, invalid feature handling, and error wrapping.
 """
 
-
+import time
 from auto_renamer import AutoRenamer
 # from ...utils.logger import Logger
 
@@ -41,20 +41,10 @@ class FileSystemTool:
             # Add a feature to test the tool (temporary)
             # self.logger.logger.info("Testing feature")
             print("Testing feature")
-            self.auto_renamer.run()
-            choice = input("Would you like to run the test again? (y/n): ")
-            def run_again(choice):
-                if choice == "n":
-                    self.shutdown()
-                    return
-                elif choice == "y":
-                    self.run()
-                    return
-                else:
-                    print("Invalid choice")
-                    return run_again(input("Would you like to run the test again? (y/n): "))
-            run_again(choice)
-            return
+            # self.auto_renamer.run()
+            print("Not implemented yet, heres a brief timer")
+            time.sleep(10)
+            print("Time's up!")
 
     def initialize(self):
         # self.logger.logger.info("FileSystemTool is initializing")
@@ -72,12 +62,12 @@ class FileSystemTool:
     def _initialize_features(self):
         # self.logger.logger.info("Initializing features")
         print("Initializing features")
-        self.auto_renamer.initialize()
+        # self.auto_renamer.initialize()
 
     def _shutdown_features(self):
         # self.logger.logger.info("Shutting down features")
         print("Shutting down features")
-        self.auto_renamer.shutdown()
+        # self.auto_renamer.shutdown()
 
     def get_meta(self):
         return {
